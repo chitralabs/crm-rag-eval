@@ -11,7 +11,7 @@ from crm_rag_eval import (
 
 def test_faq_dataset_loads():
     items = load_faq_dataset()
-    assert len(items) == 50
+    assert len(items) >= 200, f"Expected ≥200 FAQ items, got {len(items)}"
     domains = {item.domain for item in items}
     assert domains == {"billing", "returns", "sla", "account_access", "product_support"}
 
@@ -19,7 +19,7 @@ def test_faq_dataset_loads():
 def test_faq_dataset_filter_by_domain():
     items = load_faq_dataset(domains=["billing"])
     assert all(item.domain == "billing" for item in items)
-    assert len(items) == 10
+    assert len(items) >= 10
 
 
 def test_faq_risk_levels_valid():
@@ -213,3 +213,116 @@ def test_critical_samples_filter():
     r2 = EvaluationResult(sample=s, metrics=ms, risk=low_risk)
     rpt = EvaluationReport(results=[r1, r2])
     assert len(rpt.critical_samples()) == 1
+
+
+# ---- CLI tests -----------------------------------------------------------
+
+def test_cli_demo_runs():
+    from typer.testing import CliRunner
+    from crm_rag_eval.cli import app
+    runner = CliRunner()
+    result = runner.invoke(app, ["demo"])
+    assert result.exit_code == 0
+    assert "crm-rag-eval" in result.output.lower() or "Summary" in result.output
+
+
+def test_cli_datasets_list():
+    from typer.testing import CliRunner
+    from crm_rag_eval.cli import app
+    runner = CliRunner()
+    result = runner.invoke(app, ["datasets", "list"])
+    assert result.exit_code == 0
+    assert "faq" in result.output.lower()
+
+
+def test_cli_datasets_show_faq():
+    from typer.testing import CliRunner
+    from crm_rag_eval.cli import app
+    runner = CliRunner()
+    result = runner.invoke(app, ["datasets", "show", "faq", "--limit", "3"])
+    assert result.exit_code == 0
+
+
+def test_cli_datasets_show_tickets():
+    from typer.testing import CliRunner
+    from crm_rag_eval.cli import app
+    runner = CliRunner()
+    result = runner.invoke(app, ["datasets", "show", "tickets", "--limit", "3"])
+    assert result.exit_code == 0
+
+
+def test_cli_datasets_show_unknown():
+    from typer.testing import CliRunner
+    from crm_rag_eval.cli import app
+    runner = CliRunner()
+    result = runner.invoke(app, ["datasets", "show", "nonexistent"])
+    assert result.exit_code != 0
+
+
+# ---- Benchmark tests -----------------------------------------------------
+
+def test_benchmark_mock_run():
+    from crm_rag_eval.benchmarks.leaderboard import run_benchmark, MockRetriever
+    results = run_benchmark(
+        strategies={"Oracle": MockRetriever("high", 100), "Low": MockRetriever("low", 50)},
+        domains=["billing"],
+        n_samples=3,
+    )
+    assert len(results.strategy_results) == 2
+    assert results.dataset_size == 3
+
+
+def test_benchmark_leaderboard_markdown(tmp_path):
+    from crm_rag_eval.benchmarks.leaderboard import run_benchmark, MockRetriever
+    results = run_benchmark(
+        strategies={"Oracle": MockRetriever("high", 100)},
+        domains=["sla"],
+        n_samples=2,
+    )
+    out = str(tmp_path / "BENCHMARK.md")
+    results.to_markdown(out)
+    content = open(out).read()
+    assert "Leaderboard" in content
+    assert "Oracle" in content
+
+
+def test_benchmark_oracle_scores_higher_than_low():
+    from crm_rag_eval.benchmarks.leaderboard import run_benchmark, MockRetriever
+    results = run_benchmark(
+        strategies={
+            "Oracle": MockRetriever("high", 100),
+            "Low": MockRetriever("low", 50),
+        },
+        domains=["billing"],
+        n_samples=5,
+    )
+    oracle = next(r for r in results.strategy_results if r.name == "Oracle")
+    low = next(r for r in results.strategy_results if r.name == "Low")
+    assert oracle.avg_overall_score > low.avg_overall_score
+
+
+# ---- FAQ filter tests ----------------------------------------------------
+
+def test_faq_filter_by_risk_level():
+    items = load_faq_dataset(risk_levels=["critical"])
+    assert all(i.risk_level == "critical" for i in items)
+    assert len(items) > 0
+
+
+def test_faq_filter_by_difficulty():
+    items = load_faq_dataset(difficulty="hard")
+    assert all(i.difficulty == "hard" for i in items)
+    assert len(items) > 0
+
+
+def test_faq_as_dicts_structure():
+    from crm_rag_eval import load_faq_as_dicts
+    dicts = load_faq_as_dicts(domains=["billing"])
+    assert len(dicts) > 0
+    for d in dicts[:3]:
+        assert "id" in d and "question" in d and "risk_level" in d and "difficulty" in d
+
+
+def test_faq_250_total():
+    items = load_faq_dataset()
+    assert len(items) == 250, f"Expected 250, got {len(items)}"

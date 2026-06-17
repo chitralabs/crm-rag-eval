@@ -1,18 +1,10 @@
 """
-Synthetic CRM FAQ dataset.
-
-500 Q&A pairs across 5 CRM domains:
-  billing, returns, SLA, account_access, product_support
-
-All data is fully synthetic — no real customer data, no proprietary content.
+Synthetic CRM FAQ dataset — 250 Q&A pairs across 5 domains (50 per domain).
+All data is fully synthetic. No real customer data, no proprietary content.
 """
-
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
-import json
-import random
-
 
 @dataclass
 class FAQItem:
@@ -21,377 +13,274 @@ class FAQItem:
     question: str
     answer: str
     keywords: List[str]
-    risk_level: str          # low | medium | high | critical
+    risk_level: str
     ground_truth_sources: List[str]
+    difficulty: str = "medium"
 
 
-# ---------------------------------------------------------------------------
-# Static synthetic FAQ corpus — 100 items per domain (500 total)
-# ---------------------------------------------------------------------------
-
-_BILLING: List[dict] = [
-    {
-        "question": "How do I update my billing address?",
-        "answer": "Log in to your account portal, go to Billing Settings, and click Edit Address. Changes take effect on your next invoice.",
-        "keywords": ["billing", "address", "update", "invoice"],
-        "risk_level": "low",
-        "ground_truth_sources": ["billing_policy_v3.pdf#section2"],
-    },
-    {
-        "question": "What payment methods are accepted?",
-        "answer": "We accept Visa, Mastercard, American Express, PayPal, and bank transfers for annual plans.",
-        "keywords": ["payment", "credit card", "paypal", "bank transfer"],
-        "risk_level": "low",
-        "ground_truth_sources": ["billing_policy_v3.pdf#section1"],
-    },
-    {
-        "question": "Can I get a refund for unused months?",
-        "answer": "Refunds for unused months are available within 30 days of purchase for annual plans. Monthly plans are non-refundable.",
-        "keywords": ["refund", "unused", "annual", "monthly"],
-        "risk_level": "high",
-        "ground_truth_sources": ["refund_policy_v2.pdf#section4"],
-    },
-    {
-        "question": "Why was I charged twice this month?",
-        "answer": "Duplicate charges can occur when a payment fails and is retried. Please contact billing support with your transaction IDs for investigation.",
-        "keywords": ["duplicate", "charge", "twice", "transaction"],
-        "risk_level": "high",
-        "ground_truth_sources": ["billing_policy_v3.pdf#section7"],
-    },
-    {
-        "question": "How do I cancel my subscription?",
-        "answer": "You can cancel your subscription at any time from Account Settings > Subscription > Cancel. Access continues until the end of the billing period.",
-        "keywords": ["cancel", "subscription", "account settings"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["subscription_terms_v4.pdf#section3"],
-    },
-    {
-        "question": "Is there a free trial available?",
-        "answer": "Yes, a 14-day free trial is available for all new accounts. No credit card is required to start the trial.",
-        "keywords": ["free trial", "14 days", "no credit card"],
-        "risk_level": "low",
-        "ground_truth_sources": ["pricing_page_v5.html"],
-    },
-    {
-        "question": "What happens if my payment fails?",
-        "answer": "If a payment fails, we retry after 3 days and again after 7 days. After two failed retries, the account is suspended until payment is resolved.",
-        "keywords": ["payment failure", "retry", "suspended"],
-        "risk_level": "high",
-        "ground_truth_sources": ["billing_policy_v3.pdf#section6"],
-    },
-    {
-        "question": "Can I switch from monthly to annual billing?",
-        "answer": "Yes. Go to Account Settings > Billing > Switch to Annual. You will be charged the prorated annual amount and receive a 20% discount.",
-        "keywords": ["monthly", "annual", "switch", "discount"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["billing_policy_v3.pdf#section5"],
-    },
-    {
-        "question": "How do I download my invoice?",
-        "answer": "Invoices are available under Account Settings > Billing > Invoice History. Click any invoice to download a PDF.",
-        "keywords": ["invoice", "download", "pdf", "history"],
-        "risk_level": "low",
-        "ground_truth_sources": ["billing_policy_v3.pdf#section2"],
-    },
-    {
-        "question": "Do you charge VAT or sales tax?",
-        "answer": "Sales tax or VAT is applied based on your billing address jurisdiction. The rate is calculated at checkout and displayed on your invoice.",
-        "keywords": ["vat", "tax", "sales tax", "jurisdiction"],
-        "risk_level": "low",
-        "ground_truth_sources": ["tax_policy_v1.pdf"],
-    },
+_BILLING = [
+    {"question":"How do I update my billing address?","answer":"Log in to your account portal, go to Billing Settings, and click Edit Address. Changes take effect on your next invoice.","keywords":["billing","address","update","invoice"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"What payment methods are accepted?","answer":"We accept Visa, Mastercard, American Express, PayPal, and bank transfers for annual plans.","keywords":["payment","credit card","paypal","bank transfer"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"Can I get a refund for unused months?","answer":"Refunds for unused months are available within 30 days of purchase for annual plans. Monthly plans are non-refundable.","keywords":["refund","unused","annual","monthly"],"risk_level":"high","ground_truth_sources":["refund_policy_v2.pdf#section4"],"difficulty":"medium"},
+    {"question":"Why was I charged twice this month?","answer":"Duplicate charges occur when a payment fails and is retried. Contact billing support with your transaction IDs.","keywords":["duplicate","charge","twice","transaction"],"risk_level":"high","ground_truth_sources":["billing_policy_v3.pdf#section7"],"difficulty":"medium"},
+    {"question":"How do I cancel my subscription?","answer":"Cancel at any time from Account Settings > Subscription > Cancel. Access continues until the end of the billing period.","keywords":["cancel","subscription","account settings"],"risk_level":"medium","ground_truth_sources":["subscription_terms_v4.pdf#section3"],"difficulty":"easy"},
+    {"question":"Is there a free trial available?","answer":"Yes, a 14-day free trial is available for all new accounts. No credit card is required.","keywords":["free trial","14 days","no credit card"],"risk_level":"low","ground_truth_sources":["pricing_page_v5.html"],"difficulty":"easy"},
+    {"question":"What happens if my payment fails?","answer":"We retry after 3 days and again after 7 days. After two failed retries, the account is suspended.","keywords":["payment failure","retry","suspended"],"risk_level":"high","ground_truth_sources":["billing_policy_v3.pdf#section6"],"difficulty":"medium"},
+    {"question":"Can I switch from monthly to annual billing?","answer":"Yes. Go to Account Settings > Billing > Switch to Annual. You receive a 20% discount.","keywords":["monthly","annual","switch","discount"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section5"],"difficulty":"medium"},
+    {"question":"How do I download my invoice?","answer":"Invoices are under Account Settings > Billing > Invoice History. Click any invoice to download a PDF.","keywords":["invoice","download","pdf","history"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Do you charge VAT or sales tax?","answer":"Sales tax or VAT is applied based on your billing address jurisdiction, calculated at checkout.","keywords":["vat","tax","sales tax","jurisdiction"],"risk_level":"low","ground_truth_sources":["tax_policy_v1.pdf"],"difficulty":"easy"},
+    {"question":"How do I upgrade my plan?","answer":"Go to Account Settings > Plans > Upgrade. The new plan takes effect immediately with a prorated charge.","keywords":["upgrade","plan","prorated"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section4"],"difficulty":"easy"},
+    {"question":"How do I downgrade my plan?","answer":"Downgrades take effect at the start of the next billing cycle from Account Settings > Plans > Downgrade.","keywords":["downgrade","plan","billing cycle"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section4"],"difficulty":"easy"},
+    {"question":"Can I pause my subscription instead of cancelling?","answer":"Pausing is available for annual plan holders for up to 3 months. Contact billing support to initiate.","keywords":["pause","subscription","annual"],"risk_level":"medium","ground_truth_sources":["subscription_terms_v4.pdf#section6"],"difficulty":"medium"},
+    {"question":"What is your billing cycle?","answer":"Monthly plans are billed on the same date each month. Annual plans are billed once per year on the sign-up anniversary.","keywords":["billing cycle","monthly","annual","date"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"I was charged after cancelling. What do I do?","answer":"Contact billing support immediately with your cancellation confirmation number for a full refund.","keywords":["charged after cancellation","refund","confirmation"],"risk_level":"critical","ground_truth_sources":["refund_policy_v2.pdf#section5","subscription_terms_v4.pdf#section3"],"difficulty":"hard"},
+    {"question":"Can I get a receipt for my purchase?","answer":"Receipts are automatically emailed after each payment and downloadable from Account Settings > Billing > Invoice History.","keywords":["receipt","email","payment"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Do you offer non-profit or educational discounts?","answer":"Yes. Non-profits and accredited educational institutions qualify for a 30% discount. Email discounts@support.example.com with proof.","keywords":["non-profit","educational","discount","eligibility"],"risk_level":"low","ground_truth_sources":["pricing_page_v5.html#discounts"],"difficulty":"medium"},
+    {"question":"How do I change the credit card on file?","answer":"Go to Account Settings > Billing > Payment Methods > Add Card and set the new card as default.","keywords":["credit card","change","payment method","default"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section3"],"difficulty":"easy"},
+    {"question":"Is my credit card information stored securely?","answer":"We do not store raw card numbers. All payment data is tokenized with our PCI DSS Level 1 certified processor.","keywords":["credit card","security","pci","tokenized"],"risk_level":"low","ground_truth_sources":["security_policy_v4.pdf#section5"],"difficulty":"easy"},
+    {"question":"What happens to my data when I cancel?","answer":"Data is retained for 30 days after cancellation, during which you can export it. After 30 days, all data is permanently deleted.","keywords":["data","cancel","export","retention","deleted"],"risk_level":"high","ground_truth_sources":["data_retention_policy_v2.pdf"],"difficulty":"medium"},
+    {"question":"Can I have separate billing contacts?","answer":"Yes. Add a billing contact email under Account Settings > Billing > Billing Contact for invoices and payment notifications.","keywords":["billing contact","email","invoice","notifications"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Do you support purchase orders (POs)?","answer":"POs are supported for enterprise annual plans. Contact your account manager or email enterprise@support.example.com.","keywords":["purchase order","po","enterprise","billing"],"risk_level":"low","ground_truth_sources":["enterprise_terms_v2.pdf#section3"],"difficulty":"medium"},
+    {"question":"What currency do you bill in?","answer":"We bill in USD by default. EUR, GBP, AUD, and CAD are available for annual enterprise plans.","keywords":["currency","usd","eur","gbp"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"Can I get an itemized invoice?","answer":"All invoices are itemized by default showing plan fees, add-ons, taxes, and discounts.","keywords":["itemized","invoice","breakdown"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Why did my price increase?","answer":"Price changes are communicated via email at least 30 days in advance. Contact billing support for details.","keywords":["price increase","notice","billing"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section8"],"difficulty":"medium"},
+    {"question":"How do I request a billing dispute?","answer":"Dispute a charge from Account Settings > Billing > Dispute a Charge, or contact billing support within 60 days.","keywords":["dispute","charge","billing support","60 days"],"risk_level":"high","ground_truth_sources":["billing_policy_v3.pdf#section7"],"difficulty":"medium"},
+    {"question":"Is there a setup fee?","answer":"There are no setup fees. Enterprise implementations may include a one-time onboarding fee discussed at contract signing.","keywords":["setup fee","onboarding","enterprise"],"risk_level":"low","ground_truth_sources":["pricing_page_v5.html"],"difficulty":"easy"},
+    {"question":"Can I pay annually and get a discount?","answer":"Annual plans receive a 20% discount compared to monthly billing. Switch at any time from Account Settings > Billing.","keywords":["annual","discount","20%","monthly"],"risk_level":"low","ground_truth_sources":["pricing_page_v5.html#annual"],"difficulty":"easy"},
+    {"question":"What happens if I exceed my plan limits?","answer":"You are notified by email when you exceed plan limits. You have 7 days to upgrade before overage charges apply.","keywords":["plan limits","overage","upgrade","contacts"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section9"],"difficulty":"medium"},
+    {"question":"How do I apply a promo code?","answer":"Enter your promo code at checkout or apply it to existing subscriptions via Account Settings > Billing > Apply Promo Code.","keywords":["promo code","discount","checkout"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section10"],"difficulty":"easy"},
+    {"question":"Do you offer a money-back guarantee?","answer":"We offer a 30-day money-back guarantee for first-time annual plan subscribers. Monthly plans are not covered.","keywords":["money-back","guarantee","annual","30 days"],"risk_level":"high","ground_truth_sources":["refund_policy_v2.pdf#section1"],"difficulty":"medium"},
+    {"question":"How does billing work for team plans?","answer":"Team plans are billed per seat. Adding a user mid-cycle incurs a prorated charge for the remaining days.","keywords":["team plan","per seat","prorated","user"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section11"],"difficulty":"medium"},
+    {"question":"Can I remove a seat without cancelling the plan?","answer":"Yes. Remove a user from Account Settings > Team Members. The seat credit is applied to your next invoice.","keywords":["remove seat","credit","invoice","team"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section11"],"difficulty":"medium"},
+    {"question":"Is billing automatic or manual?","answer":"Billing is fully automatic. Your stored payment method is charged at the start of each billing cycle.","keywords":["automatic","billing","payment","invoice"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"What is your refund timeline?","answer":"Approved refunds are processed within 5-10 business days. Bank processing time varies by issuer.","keywords":["refund","timeline","business days","bank"],"risk_level":"medium","ground_truth_sources":["refund_policy_v2.pdf#section3"],"difficulty":"easy"},
+    {"question":"Can I get a refund if I accidentally upgraded?","answer":"Accidental upgrades can be refunded if reported within 48 hours. Contact billing support with your account ID.","keywords":["accidental upgrade","refund","48 hours"],"risk_level":"high","ground_truth_sources":["refund_policy_v2.pdf#section6"],"difficulty":"medium"},
+    {"question":"How do I view my payment history?","answer":"Full payment history is under Account Settings > Billing > Payment History. Filter by date range and export as CSV.","keywords":["payment history","csv","export","filter"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"What is the grace period if my payment fails?","answer":"A 7-day grace period is provided after a failed payment before account suspension.","keywords":["grace period","failed payment","suspension","7 days"],"risk_level":"high","ground_truth_sources":["billing_policy_v3.pdf#section6"],"difficulty":"medium"},
+    {"question":"Can I split payment between two cards?","answer":"Split payment across multiple cards is not currently supported. Only one default payment method can be charged per cycle.","keywords":["split payment","two cards","billing"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section3"],"difficulty":"easy"},
+    {"question":"Do you send payment reminders?","answer":"A payment reminder email is sent 3 days before each billing date for monthly plans and 14 days before for annual plans.","keywords":["payment reminder","email","billing date"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"Can I request an invoice in a different currency?","answer":"Invoices are issued in your billing currency. Currency changes require a new subscription and are not retroactive.","keywords":["invoice currency","billing","retroactive"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"Is there a fee to reactivate a suspended account?","answer":"There is no reactivation fee. Pay the outstanding balance to restore your account. Data is preserved during suspension.","keywords":["reactivation","suspended","fee","data"],"risk_level":"medium","ground_truth_sources":["billing_policy_v3.pdf#section6"],"difficulty":"easy"},
+    {"question":"Can I transfer my subscription to another account?","answer":"Subscription transfers are handled by billing support. Both account owners must confirm the transfer via email.","keywords":["transfer","subscription","accounts","confirm"],"risk_level":"high","ground_truth_sources":["subscription_terms_v4.pdf#section7"],"difficulty":"hard"},
+    {"question":"How do I cancel a pending refund?","answer":"Contact billing support immediately to cancel a pending refund. Once processed, a refund cannot be reversed.","keywords":["cancel refund","pending","billing support"],"risk_level":"medium","ground_truth_sources":["refund_policy_v2.pdf#section3"],"difficulty":"medium"},
+    {"question":"Do you offer volume discounts?","answer":"Volume discounts are available for teams of 25 or more users. Contact sales@example.com for a custom quote.","keywords":["volume discount","team","25 users","custom"],"risk_level":"low","ground_truth_sources":["pricing_page_v5.html#volume"],"difficulty":"easy"},
+    {"question":"What is the minimum contract length?","answer":"Monthly plans have no minimum contract. Annual plans commit to 12 months. Early termination is possible but without refund of remaining months.","keywords":["contract","minimum","monthly","annual","termination"],"risk_level":"medium","ground_truth_sources":["subscription_terms_v4.pdf#section2"],"difficulty":"medium"},
+    {"question":"Can I get a W-9 or W-8BEN form?","answer":"W-9 and W-8BEN forms are available upon request for enterprise customers. Email tax@support.example.com.","keywords":["w-9","w-8ben","tax form","enterprise"],"risk_level":"low","ground_truth_sources":["tax_policy_v1.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I add a PO number to my invoice?","answer":"Add PO numbers under Account Settings > Billing > Invoice Details > PO Number. It appears on all future invoices.","keywords":["po number","invoice","billing"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"What happens to my billing if I merge two accounts?","answer":"Account merges are handled by the billing team. The resulting account uses the higher plan of the two merged accounts.","keywords":["merge","accounts","billing","plan"],"risk_level":"high","ground_truth_sources":["account_policy_v2.pdf#section4"],"difficulty":"hard"},
+    {"question":"Is there a charge for data storage?","answer":"Each plan includes a data storage allocation. Overages are billed at $0.02 per GB per month above the plan limit.","keywords":["storage","data","overage","gb"],"risk_level":"low","ground_truth_sources":["billing_policy_v3.pdf#section9"],"difficulty":"easy"},
 ]
 
-_RETURNS: List[dict] = [
-    {
-        "question": "What is your return policy?",
-        "answer": "Products can be returned within 30 days of purchase in original condition with proof of purchase.",
-        "keywords": ["return", "policy", "30 days", "proof of purchase"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["return_policy_v2.pdf#section1"],
-    },
-    {
-        "question": "How do I initiate a return?",
-        "answer": "Visit the Returns Center in your account, select the order, choose items to return, and print the prepaid return label.",
-        "keywords": ["initiate", "return", "label", "returns center"],
-        "risk_level": "low",
-        "ground_truth_sources": ["return_policy_v2.pdf#section2"],
-    },
-    {
-        "question": "Can I return a digital product?",
-        "answer": "Digital products and software licenses are non-returnable once activated. Exceptions apply if the product fails to function as described.",
-        "keywords": ["digital", "software", "license", "non-returnable"],
-        "risk_level": "high",
-        "ground_truth_sources": ["return_policy_v2.pdf#section5"],
-    },
-    {
-        "question": "How long does a refund take after I return an item?",
-        "answer": "Once we receive and inspect the returned item, refunds are processed within 5–7 business days to the original payment method.",
-        "keywords": ["refund", "timeline", "business days", "inspection"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["return_policy_v2.pdf#section3"],
-    },
-    {
-        "question": "What if I received a damaged item?",
-        "answer": "Report damaged items within 48 hours of delivery by contacting support with photos. We will arrange a replacement or full refund at no cost.",
-        "keywords": ["damaged", "replacement", "photos", "48 hours"],
-        "risk_level": "high",
-        "ground_truth_sources": ["return_policy_v2.pdf#section6"],
-    },
-    {
-        "question": "Do I need to pay for return shipping?",
-        "answer": "Return shipping is free for defective or incorrectly shipped items. For other returns, a flat $7.99 return label fee is deducted from your refund.",
-        "keywords": ["return shipping", "free", "label fee", "defective"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["return_policy_v2.pdf#section4"],
-    },
-    {
-        "question": "Can I exchange an item instead of returning it?",
-        "answer": "Exchanges are supported for the same item in a different size or color. Go to the Returns Center and select Exchange instead of Return.",
-        "keywords": ["exchange", "size", "color", "returns center"],
-        "risk_level": "low",
-        "ground_truth_sources": ["return_policy_v2.pdf#section7"],
-    },
-    {
-        "question": "What items cannot be returned?",
-        "answer": "Perishable goods, customized products, hazardous materials, and opened consumables cannot be returned.",
-        "keywords": ["non-returnable", "perishable", "customized", "hazardous"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["return_policy_v2.pdf#section5"],
-    },
-    {
-        "question": "I returned an item but have not received my refund yet.",
-        "answer": "If more than 10 business days have passed since we confirmed receipt of your return, please contact support with your return tracking number.",
-        "keywords": ["missing refund", "tracking", "business days"],
-        "risk_level": "high",
-        "ground_truth_sources": ["return_policy_v2.pdf#section3"],
-    },
-    {
-        "question": "Can I return a gift?",
-        "answer": "Gifts can be returned for store credit equal to the purchase price. A gift receipt or order number is required.",
-        "keywords": ["gift", "store credit", "gift receipt"],
-        "risk_level": "low",
-        "ground_truth_sources": ["return_policy_v2.pdf#section8"],
-    },
+_RETURNS = [
+    {"question":"What is your return policy?","answer":"Products can be returned within 30 days of purchase in original condition with proof of purchase.","keywords":["return","policy","30 days"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I initiate a return?","answer":"Visit the Returns Center in your account, select the order, choose items to return, and print the prepaid return label.","keywords":["initiate","return","label"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I return a digital product?","answer":"Digital products and software licenses are non-returnable once activated. Exceptions apply if the product fails to function as described.","keywords":["digital","software","non-returnable"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section5"],"difficulty":"medium"},
+    {"question":"How long does a refund take after I return an item?","answer":"Once we receive and inspect the returned item, refunds are processed within 5-7 business days.","keywords":["refund","timeline","business days"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section3"],"difficulty":"easy"},
+    {"question":"What if I received a damaged item?","answer":"Report damaged items within 48 hours of delivery with photos. We will arrange a replacement or full refund at no cost.","keywords":["damaged","replacement","48 hours"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section6"],"difficulty":"medium"},
+    {"question":"Do I need to pay for return shipping?","answer":"Return shipping is free for defective or incorrectly shipped items. Other returns incur a flat $7.99 label fee deducted from the refund.","keywords":["return shipping","free","label fee"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section4"],"difficulty":"medium"},
+    {"question":"Can I exchange an item instead of returning it?","answer":"Exchanges are supported for the same item in a different size or color via the Returns Center.","keywords":["exchange","size","color"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section7"],"difficulty":"easy"},
+    {"question":"What items cannot be returned?","answer":"Perishable goods, customized products, hazardous materials, and opened consumables cannot be returned.","keywords":["non-returnable","perishable","customized"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section5"],"difficulty":"easy"},
+    {"question":"I returned an item but have not received my refund yet.","answer":"If more than 10 business days have passed since return confirmation, contact support with your return tracking number.","keywords":["missing refund","tracking","business days"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section3"],"difficulty":"medium"},
+    {"question":"Can I return a gift?","answer":"Gifts can be returned for store credit equal to the purchase price. A gift receipt or order number is required.","keywords":["gift","store credit","gift receipt"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section8"],"difficulty":"easy"},
+    {"question":"Can I return an item bought on sale?","answer":"Sale items are returnable under the standard 30-day policy. The refund is issued at the sale price paid.","keywords":["sale","return","refund","price"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section1"],"difficulty":"medium"},
+    {"question":"What packaging do I need for a return?","answer":"Items must be returned in original packaging where possible. Use secure packaging to prevent damage in transit if original is unavailable.","keywords":["packaging","return","original"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I return multiple items from different orders in one shipment?","answer":"Each order requires a separate return shipment. Combining orders may delay your refund.","keywords":["multiple orders","return","shipment"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I track my return shipment?","answer":"A tracking number is provided with your return label. Track via the carrier's website or the Returns Center.","keywords":["track","return","tracking number","carrier"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"What happens if I return an item without a return label?","answer":"Returns without an authorized label may be refused or result in delayed processing. Always use the Returns Center.","keywords":["return label","unauthorized","refused"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"Can I return an item after 30 days?","answer":"Returns after 30 days are accepted only for defective items under warranty. Non-defective items are not eligible.","keywords":["30 days","return","warranty","defective"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section1"],"difficulty":"medium"},
+    {"question":"Will I get a full refund or store credit?","answer":"Choose between a full refund to the original payment method or store credit for 10% more value during the return process.","keywords":["full refund","store credit","10%","preference"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section3"],"difficulty":"medium"},
+    {"question":"Who pays for return shipping on international orders?","answer":"International return shipping is the customer's responsibility unless the item is defective or incorrectly sent.","keywords":["international","return shipping","customer","defective"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section9"],"difficulty":"hard"},
+    {"question":"What is the return process for bulk orders?","answer":"Bulk order returns (10+ items) require prior approval. Contact returns@support.example.com before shipping.","keywords":["bulk","return","approval","10 items"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section10"],"difficulty":"hard"},
+    {"question":"How do I get a replacement for a defective item?","answer":"Contact support within 48 hours with photos of the defect. We will ship a replacement within 2 business days at no charge.","keywords":["replacement","defective","48 hours","photos"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section6"],"difficulty":"medium"},
+    {"question":"Can I return an opened product?","answer":"Opened products are returnable if defective. Non-defective opened products incur a 15% restocking fee.","keywords":["opened","return","restocking fee","15%"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section5"],"difficulty":"medium"},
+    {"question":"What is your warranty policy?","answer":"All physical products carry a 1-year manufacturer warranty covering defects in materials and workmanship. Misuse damage is not covered.","keywords":["warranty","1 year","defects","misuse"],"risk_level":"medium","ground_truth_sources":["warranty_policy_v1.pdf"],"difficulty":"easy"},
+    {"question":"I received the wrong item. What do I do?","answer":"Contact support within 48 hours with your order number and a photo. We will send the correct item and arrange return of the wrong one.","keywords":["wrong item","order number","photo"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section6"],"difficulty":"medium"},
+    {"question":"Can I cancel a return request once submitted?","answer":"Return requests can be cancelled within 24 hours of submission. After that, the return label is activated.","keywords":["cancel return","24 hours","return label"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"Is the return label printable on a regular printer?","answer":"Yes. Return labels are generated as PDF and can be printed on any standard or thermal label printer.","keywords":["return label","pdf","printer"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"How long does it take for a replacement to arrive?","answer":"Replacements are shipped within 2 business days of approving your return or defect claim.","keywords":["replacement","2 business days","shipping"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section6"],"difficulty":"easy"},
+    {"question":"Do I need to include all original accessories in the return?","answer":"Yes. All original accessories, manuals, and packaging should be included. Missing accessories may result in a partial refund.","keywords":["accessories","return","partial refund"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"Can I return a product purchased from a reseller?","answer":"Products from authorized resellers must be returned through the reseller. Contact the reseller directly.","keywords":["reseller","return","authorized"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section11"],"difficulty":"medium"},
+    {"question":"What do I do if my return shipment is lost?","answer":"If tracking shows no movement for 7 days, contact support. We initiate a carrier trace and process your refund within 5 business days.","keywords":["lost","return","tracking","carrier trace"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section4"],"difficulty":"hard"},
+    {"question":"Is there a limit on the number of returns I can make?","answer":"There is no stated limit, but accounts with return rates above 20% of purchases may be flagged for review.","keywords":["return limit","excessive","20%","abuse"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section12"],"difficulty":"hard"},
+    {"question":"How do I return a subscription box?","answer":"Subscription box contents can be returned within 14 days if defective. Full box returns are not accepted.","keywords":["subscription box","14 days","defective"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section13"],"difficulty":"medium"},
+    {"question":"Will I be notified when my return is received?","answer":"Yes. You receive an email when your return arrives and again when the refund is processed.","keywords":["notification","return received","email","refund"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section3"],"difficulty":"easy"},
+    {"question":"Can I return a product that was a bundle?","answer":"Bundle items must be returned together. Partial bundle returns are not accepted unless one item is defective.","keywords":["bundle","return","partial","defective"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section14"],"difficulty":"hard"},
+    {"question":"What is your return policy for limited edition products?","answer":"Limited edition products are non-returnable once shipped. Defective items are replaced if a substitute is available.","keywords":["limited edition","non-returnable","defective","replacement"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section5"],"difficulty":"hard"},
+    {"question":"How are refunds handled for installment payments?","answer":"Refunds on installment plans cancel remaining installments first. Any excess is returned to the original payment method.","keywords":["installment","refund","remaining payments"],"risk_level":"high","ground_truth_sources":["refund_policy_v2.pdf#section7"],"difficulty":"hard"},
+    {"question":"Can I return an item I received as a corporate gift?","answer":"Corporate gifts can be returned for store credit using the order number. Credit is issued to the original purchasing account.","keywords":["corporate gift","return","store credit","order number"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section8"],"difficulty":"medium"},
+    {"question":"Do I need a return authorization number?","answer":"An RMA number is required for all returns. It is generated automatically when you initiate a return through the Returns Center.","keywords":["rma","return authorization","returns center"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I escalate a return dispute?","answer":"Email returns-escalations@support.example.com with your RMA number and case details for manager review.","keywords":["escalate","return dispute","denied","manager"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section15"],"difficulty":"hard"},
+    {"question":"What is the restocking fee?","answer":"A 15% restocking fee applies to non-defective returns of opened products. Defective items, wrong items, and items not as described are exempt.","keywords":["restocking fee","15%","defective","waived"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section5"],"difficulty":"medium"},
+    {"question":"Can I return a product if I changed my mind?","answer":"Yes. Change-of-mind returns are accepted within 30 days for non-opened products. A restocking fee may apply.","keywords":["change of mind","return","30 days","restocking"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section1"],"difficulty":"easy"},
+    {"question":"How does the store credit work?","answer":"Store credit is added to your account wallet and can be used for any future purchase. Credits do not expire and are non-transferable.","keywords":["store credit","wallet","expiry","non-transferable"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section3"],"difficulty":"easy"},
+    {"question":"Do I need to show ID for a return in-store?","answer":"In-store returns require a valid photo ID and the original receipt or order confirmation.","keywords":["in-store","return","id","receipt"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I return an item if the seal is broken?","answer":"Broken-seal products are treated as opened. A 15% restocking fee may apply unless the item is defective.","keywords":["seal","broken","return","restocking fee"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section5"],"difficulty":"medium"},
+    {"question":"What is the return window for electronics?","answer":"Electronics have a 15-day return window. All original accessories, cables, and packaging must be included.","keywords":["electronics","15 days","return","accessories"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section16"],"difficulty":"medium"},
+    {"question":"How do I return a subscription add-on?","answer":"Subscription add-ons are non-refundable once activated. If non-functional, contact support for a credit.","keywords":["add-on","subscription","non-refundable","credit"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section5"],"difficulty":"medium"},
+    {"question":"Can I return a product that was installed by a technician?","answer":"Professionally installed products cannot be returned without a technician uninstallation report. Contact support to arrange.","keywords":["installed","technician","return","report"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section17"],"difficulty":"hard"},
+    {"question":"What happens if the return label expires?","answer":"Return labels expire after 14 days. Generate a new label via the Returns Center. The return window is based on your original request date.","keywords":["return label","expired","14 days","new label"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I return a product with missing parts?","answer":"Note missing parts in your return request. A partial refund may be issued based on the missing components.","keywords":["missing parts","return","partial refund"],"risk_level":"medium","ground_truth_sources":["return_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"Can I donate instead of returning?","answer":"For eligible low-value items we may offer a Keep It option with a full refund. This is offered at our discretion.","keywords":["keep it","refund","donate","low-value"],"risk_level":"low","ground_truth_sources":["return_policy_v2.pdf#section18"],"difficulty":"medium"},
+    {"question":"What do I do if my return was delivered to the wrong address?","answer":"Contact support immediately with your return tracking number. We will investigate with the carrier and re-process your refund once the item is located or the claim is settled.","keywords":["wrong address","return","carrier","refund"],"risk_level":"high","ground_truth_sources":["return_policy_v2.pdf#section4"],"difficulty":"hard"},
 ]
 
-_SLA: List[dict] = [
-    {
-        "question": "What is the guaranteed uptime SLA?",
-        "answer": "Our platform guarantees 99.9% monthly uptime. Planned maintenance windows are excluded and communicated 48 hours in advance.",
-        "keywords": ["uptime", "sla", "99.9%", "maintenance"],
-        "risk_level": "high",
-        "ground_truth_sources": ["sla_agreement_v6.pdf#section1"],
-    },
-    {
-        "question": "What compensation do I receive if the SLA is breached?",
-        "answer": "If monthly uptime falls below 99.9%, you are eligible for service credits equal to 10x the downtime hours as a percentage of your monthly fee.",
-        "keywords": ["sla breach", "compensation", "service credit", "downtime"],
-        "risk_level": "critical",
-        "ground_truth_sources": ["sla_agreement_v6.pdf#section4"],
-    },
-    {
-        "question": "How do I report an outage?",
-        "answer": "Report outages through the Support Portal or by emailing incidents@support.example.com. Include your account ID and the symptoms observed.",
-        "keywords": ["outage", "report", "support portal", "incidents"],
-        "risk_level": "high",
-        "ground_truth_sources": ["sla_agreement_v6.pdf#section2"],
-    },
-    {
-        "question": "What is the target response time for critical tickets?",
-        "answer": "Critical priority tickets have a 1-hour initial response SLA and a 4-hour resolution target during business hours.",
-        "keywords": ["response time", "critical", "1 hour", "resolution"],
-        "risk_level": "high",
-        "ground_truth_sources": ["support_tiers_v3.pdf#section2"],
-    },
-    {
-        "question": "Does the SLA cover third-party integrations?",
-        "answer": "The SLA covers the core platform only. Outages caused by third-party services, including payment gateways and external APIs, are excluded.",
-        "keywords": ["sla", "third-party", "integration", "excluded"],
-        "risk_level": "high",
-        "ground_truth_sources": ["sla_agreement_v6.pdf#section6"],
-    },
-    {
-        "question": "How is downtime calculated for SLA purposes?",
-        "answer": "Downtime is measured from the time a support ticket is opened or our monitoring system detects unavailability, whichever comes first.",
-        "keywords": ["downtime", "calculation", "monitoring", "availability"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["sla_agreement_v6.pdf#section3"],
-    },
-    {
-        "question": "Can I request a custom SLA for my enterprise plan?",
-        "answer": "Custom SLA agreements with higher uptime guarantees and dedicated support are available for enterprise customers. Contact your account manager.",
-        "keywords": ["custom sla", "enterprise", "account manager"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["enterprise_terms_v2.pdf#section1"],
-    },
-    {
-        "question": "Where can I view the current system status?",
-        "answer": "Real-time system status and historical incident reports are available at status.example.com. You can subscribe to email or SMS alerts.",
-        "keywords": ["system status", "status page", "incidents", "alerts"],
-        "risk_level": "low",
-        "ground_truth_sources": ["sla_agreement_v6.pdf#section2"],
-    },
-    {
-        "question": "What is your RTO and RPO for disaster recovery?",
-        "answer": "Our Recovery Time Objective (RTO) is 4 hours and Recovery Point Objective (RPO) is 1 hour for enterprise tier customers.",
-        "keywords": ["rto", "rpo", "disaster recovery", "enterprise"],
-        "risk_level": "critical",
-        "ground_truth_sources": ["dr_policy_v2.pdf#section1"],
-    },
-    {
-        "question": "Are SLA credits applied automatically?",
-        "answer": "SLA credits are calculated monthly and applied to your next invoice automatically. You do not need to file a claim.",
-        "keywords": ["sla credits", "automatic", "invoice"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["sla_agreement_v6.pdf#section5"],
-    },
+_SLA = [
+    {"question":"What is the guaranteed uptime SLA?","answer":"Our platform guarantees 99.9% monthly uptime. Planned maintenance windows are excluded and communicated 48 hours in advance.","keywords":["uptime","sla","99.9%","maintenance"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section1"],"difficulty":"easy"},
+    {"question":"What compensation do I receive if the SLA is breached?","answer":"If monthly uptime falls below 99.9%, you are eligible for service credits equal to 10x the downtime hours as a percentage of your monthly fee.","keywords":["sla breach","compensation","service credit","downtime"],"risk_level":"critical","ground_truth_sources":["sla_agreement_v6.pdf#section4"],"difficulty":"hard"},
+    {"question":"How do I report an outage?","answer":"Report outages through the Support Portal or by emailing incidents@support.example.com with your account ID and symptoms.","keywords":["outage","report","support portal"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section2"],"difficulty":"easy"},
+    {"question":"What is the target response time for critical tickets?","answer":"Critical priority tickets have a 1-hour initial response SLA and a 4-hour resolution target during business hours.","keywords":["response time","critical","1 hour","resolution"],"risk_level":"high","ground_truth_sources":["support_tiers_v3.pdf#section2"],"difficulty":"medium"},
+    {"question":"Does the SLA cover third-party integrations?","answer":"The SLA covers the core platform only. Outages caused by third-party services including payment gateways and external APIs are excluded.","keywords":["sla","third-party","integration","excluded"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section6"],"difficulty":"medium"},
+    {"question":"How is downtime calculated for SLA purposes?","answer":"Downtime is measured from the time a support ticket is opened or our monitoring system detects unavailability, whichever comes first.","keywords":["downtime","calculation","monitoring"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section3"],"difficulty":"medium"},
+    {"question":"Can I request a custom SLA for my enterprise plan?","answer":"Custom SLA agreements with higher uptime guarantees and dedicated support are available for enterprise customers. Contact your account manager.","keywords":["custom sla","enterprise","account manager"],"risk_level":"medium","ground_truth_sources":["enterprise_terms_v2.pdf#section1"],"difficulty":"medium"},
+    {"question":"Where can I view the current system status?","answer":"Real-time system status and historical incident reports are available at status.example.com. Subscribe to email or SMS alerts.","keywords":["system status","status page","incidents"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section2"],"difficulty":"easy"},
+    {"question":"What is your RTO and RPO for disaster recovery?","answer":"Our Recovery Time Objective (RTO) is 4 hours and Recovery Point Objective (RPO) is 1 hour for enterprise tier customers.","keywords":["rto","rpo","disaster recovery","enterprise"],"risk_level":"critical","ground_truth_sources":["dr_policy_v2.pdf#section1"],"difficulty":"hard"},
+    {"question":"Are SLA credits applied automatically?","answer":"SLA credits are calculated monthly and applied to your next invoice automatically. You do not need to file a claim.","keywords":["sla credits","automatic","invoice"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section5"],"difficulty":"medium"},
+    {"question":"What is the definition of unavailability in your SLA?","answer":"Unavailability is defined as the inability of all users to access the platform's core features. Partial degradation is not counted as full unavailability.","keywords":["unavailability","definition","core features","degradation"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section3"],"difficulty":"hard"},
+    {"question":"How many nines of uptime do you offer?","answer":"The standard plan offers three nines (99.9%). Enterprise plans can include four nines (99.99%) under a custom agreement.","keywords":["nines","99.9%","99.99%","enterprise"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section1"],"difficulty":"medium"},
+    {"question":"What is your maintenance window schedule?","answer":"Planned maintenance is scheduled every second Tuesday between 02:00-04:00 UTC. Notices are sent 48 hours in advance.","keywords":["maintenance window","tuesday","utc","scheduled"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section7"],"difficulty":"medium"},
+    {"question":"Does the SLA apply to the mobile app?","answer":"The SLA covers the web platform and APIs. Mobile app availability is on a best-effort basis and is not included.","keywords":["mobile app","sla","best-effort","web platform"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section8"],"difficulty":"medium"},
+    {"question":"What support tier is included in my plan?","answer":"Starter plans include email support with a 24-hour response SLA. Professional adds chat with 4-hour response. Enterprise includes phone and dedicated support.","keywords":["support tier","email","chat","phone","response"],"risk_level":"medium","ground_truth_sources":["support_tiers_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"Is 24/7 support available?","answer":"24/7 support is available for enterprise customers. Standard plans receive support during business hours (9 AM - 6 PM UTC, Monday-Friday).","keywords":["24/7","support","enterprise","business hours"],"risk_level":"medium","ground_truth_sources":["support_tiers_v3.pdf#section3"],"difficulty":"easy"},
+    {"question":"How do I escalate an open support ticket?","answer":"If a ticket has exceeded its SLA target, click Escalate on the ticket or contact your account manager. Enterprise tickets auto-escalate after SLA breach.","keywords":["escalate","ticket","sla target","account manager"],"risk_level":"medium","ground_truth_sources":["support_tiers_v3.pdf#section4"],"difficulty":"medium"},
+    {"question":"What is the P1 incident response process?","answer":"P1 incidents trigger our war room process: engineering on-call is paged within 5 minutes, status page updated within 15 minutes, customer communication within 30 minutes.","keywords":["p1","incident","war room","on-call"],"risk_level":"critical","ground_truth_sources":["incident_response_v3.pdf"],"difficulty":"hard"},
+    {"question":"How do I subscribe to status page alerts?","answer":"Visit status.example.com and click Subscribe. Choose email or SMS and select the components you want to monitor.","keywords":["status page","subscribe","alerts","sms"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section2"],"difficulty":"easy"},
+    {"question":"What SLA applies to API endpoints?","answer":"API endpoints are covered by the same uptime SLA as the web platform. API response time SLA (p99 < 500ms) is available for enterprise plans.","keywords":["api","sla","response time","p99"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section9"],"difficulty":"hard"},
+    {"question":"How much advance notice do you give before deprecating a feature?","answer":"We provide a minimum of 90 days notice before deprecating any feature or API version. Enterprise customers receive 180 days notice.","keywords":["deprecation","notice","90 days","api"],"risk_level":"medium","ground_truth_sources":["product_policy_v2.pdf#section1"],"difficulty":"medium"},
+    {"question":"What is your data backup frequency?","answer":"Customer data is backed up every 6 hours. Backups are retained for 30 days on standard plans and 1 year on enterprise plans.","keywords":["backup","frequency","6 hours","retention"],"risk_level":"high","ground_truth_sources":["dr_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"Does the SLA include data loss?","answer":"Data loss is covered separately under the data integrity SLA. We guarantee zero data loss for committed transactions backed by hourly snapshots.","keywords":["data loss","sla","snapshots","database"],"risk_level":"critical","ground_truth_sources":["dr_policy_v2.pdf#section3"],"difficulty":"hard"},
+    {"question":"What is the maximum amount of SLA credit I can receive?","answer":"SLA credits are capped at 30% of your monthly fee. Credits are non-transferable and cannot be exchanged for cash.","keywords":["sla credit","cap","30%","monthly fee"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section4"],"difficulty":"hard"},
+    {"question":"Do you have geographical redundancy?","answer":"Yes. Our infrastructure spans three availability zones in two geographic regions. Failover is automatic and typically completes within 60 seconds.","keywords":["redundancy","availability zones","failover","geographic"],"risk_level":"medium","ground_truth_sources":["infrastructure_overview_v2.pdf"],"difficulty":"medium"},
+    {"question":"What is the SLA for database queries?","answer":"Database query response time SLA (p95 < 200ms) is available under enterprise plans. Standard plans do not have a query time SLA.","keywords":["database","query","p95","200ms"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section9"],"difficulty":"hard"},
+    {"question":"How are planned maintenance windows communicated?","answer":"Planned maintenance is announced via email to account admins and posted on the status page at least 48 hours before the window begins.","keywords":["planned maintenance","email","48 hours","status page"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section7"],"difficulty":"easy"},
+    {"question":"What is your security incident response SLA?","answer":"Security incidents are triaged within 1 hour of detection. Affected customers are notified within 24 hours per our security incident notification policy.","keywords":["security incident","triage","1 hour","notification"],"risk_level":"critical","ground_truth_sources":["security_policy_v4.pdf#section6"],"difficulty":"hard"},
+    {"question":"Are beta features covered by the SLA?","answer":"Beta features are explicitly excluded from uptime and performance SLAs. They are provided as-is for evaluation purposes.","keywords":["beta","sla","excluded","as-is"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section10"],"difficulty":"medium"},
+    {"question":"How do I open a P1 incident ticket?","answer":"For P1 incidents, call our emergency hotline (enterprise only) or use the Critical Issue button in the Support Portal.","keywords":["p1","hotline","emergency","support portal"],"risk_level":"critical","ground_truth_sources":["incident_response_v3.pdf"],"difficulty":"hard"},
+    {"question":"What SLA does batch processing have?","answer":"Batch processing jobs have an 8-hour completion SLA for files under 1GB. Larger files are handled under a custom agreement.","keywords":["batch processing","8 hours","1gb","completion"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section11"],"difficulty":"medium"},
+    {"question":"Do SLA credits expire?","answer":"SLA credits expire if not applied within 6 months. They are automatically applied to invoices and do not roll over indefinitely.","keywords":["sla credits","expire","6 months","invoices"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section5"],"difficulty":"medium"},
+    {"question":"Is there a severity matrix for support tickets?","answer":"Yes. Severity 1 (system down), Severity 2 (major impairment), Severity 3 (minor impairment), Severity 4 (question). Each has distinct response and resolution targets.","keywords":["severity","matrix","severity 1","severity 2"],"risk_level":"medium","ground_truth_sources":["support_tiers_v3.pdf#section2"],"difficulty":"medium"},
+    {"question":"What is the SLA for data export jobs?","answer":"Standard data exports complete within 30 minutes. Exports exceeding 10GB may take up to 4 hours.","keywords":["data export","30 minutes","10gb","email"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section12"],"difficulty":"easy"},
+    {"question":"How is SLA calculated during a leap year?","answer":"SLA uptime percentages are calculated based on total minutes in the calendar month, including leap year adjustments.","keywords":["sla","leap year","calculation","minutes"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section3"],"difficulty":"hard"},
+    {"question":"What is the SLA exclusion for force majeure?","answer":"Downtime caused by events beyond our reasonable control (natural disasters, acts of government, war) is excluded from SLA calculations.","keywords":["force majeure","exclusion","downtime","natural disaster"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section13"],"difficulty":"hard"},
+    {"question":"Do you publish historical uptime data?","answer":"Historical uptime data for the past 12 months is publicly available on our status page at status.example.com/history.","keywords":["historical uptime","status page","12 months"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section2"],"difficulty":"easy"},
+    {"question":"What network latency SLA do you offer?","answer":"Network latency SLA (< 50ms round-trip for in-region requests) is available under enterprise plans. Cross-region latency is not covered.","keywords":["network latency","50ms","enterprise","in-region"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section9"],"difficulty":"hard"},
+    {"question":"How do I verify SLA credit was applied?","answer":"SLA credits appear as a line item labeled SLA Service Credit on your invoice. Also viewable under Account Settings > Billing > Credits.","keywords":["sla credit","invoice","line item","verify"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section5"],"difficulty":"easy"},
+    {"question":"Is email notification latency covered by the SLA?","answer":"Email notification delivery latency is not covered by the platform SLA. Email delivery depends on third-party email providers.","keywords":["email","notification","latency","sla"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section6"],"difficulty":"medium"},
+    {"question":"What SLA applies during peak usage periods?","answer":"The SLA applies equally during peak and off-peak periods. We scale infrastructure proactively to maintain SLA during high-traffic events.","keywords":["peak usage","sla","scaling","high-traffic"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section1"],"difficulty":"medium"},
+    {"question":"How long after an incident is the post-incident review published?","answer":"A post-incident review (PIR) is published within 5 business days of a P1 or P2 incident resolution.","keywords":["post-incident review","pir","5 business days","p1"],"risk_level":"medium","ground_truth_sources":["incident_response_v3.pdf"],"difficulty":"medium"},
+    {"question":"What is the SLA for webhook delivery?","answer":"Webhooks are delivered with at-least-once delivery semantics. Failed deliveries are retried for up to 24 hours.","keywords":["webhook","delivery","retry","24 hours"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section14"],"difficulty":"medium"},
+    {"question":"Can I request a dedicated infrastructure SLA?","answer":"Dedicated infrastructure with higher SLAs is available for enterprise customers at additional cost. Contact enterprise@support.example.com.","keywords":["dedicated infrastructure","enterprise","higher sla"],"risk_level":"medium","ground_truth_sources":["enterprise_terms_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"Does downtime during testing count against the SLA?","answer":"Downtime in customer-controlled sandbox or QA environments does not count against the production SLA.","keywords":["sandbox","qa","testing","production sla"],"risk_level":"medium","ground_truth_sources":["sla_agreement_v6.pdf#section3"],"difficulty":"medium"},
+    {"question":"What is the SLA for SSO authentication?","answer":"SSO authentication is part of the core platform SLA. SSO outages caused by the customer's identity provider are excluded.","keywords":["sso","authentication","sla","identity provider"],"risk_level":"high","ground_truth_sources":["sla_agreement_v6.pdf#section6"],"difficulty":"hard"},
+    {"question":"Is there a SLA for report generation?","answer":"Report generation for datasets under 100,000 rows must complete within 60 seconds. Larger datasets are excluded.","keywords":["report generation","100,000 rows","60 seconds"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section15"],"difficulty":"medium"},
+    {"question":"What is the SLA for customer onboarding?","answer":"Enterprise onboarding SLA: kickoff call within 2 business days, technical setup within 5 business days, go-live within 30 business days.","keywords":["onboarding","sla","kickoff","go-live"],"risk_level":"medium","ground_truth_sources":["enterprise_terms_v2.pdf#section4"],"difficulty":"medium"},
+    {"question":"Can I waive the SLA for a lower price?","answer":"SLA waiver options are not currently offered. All plans include the stated SLA as a baseline commitment.","keywords":["waive","sla","lower price"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section1"],"difficulty":"easy"},
+    {"question":"What is the SLA for password reset emails?","answer":"Password reset emails are sent immediately upon request. Delivery depends on the receiving email provider and is not covered by the platform SLA.","keywords":["password reset","email","sla","delivery"],"risk_level":"low","ground_truth_sources":["sla_agreement_v6.pdf#section6"],"difficulty":"easy"},
 ]
 
-_ACCOUNT_ACCESS: List[dict] = [
-    {
-        "question": "How do I reset my password?",
-        "answer": "Click Forgot Password on the login page, enter your email address, and follow the link sent to your inbox. Links expire after 24 hours.",
-        "keywords": ["password", "reset", "forgot", "email"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["security_policy_v4.pdf#section1"],
-    },
-    {
-        "question": "How do I enable two-factor authentication?",
-        "answer": "Go to Account Settings > Security > Two-Factor Authentication and follow the setup wizard. Authenticator apps and SMS are supported.",
-        "keywords": ["2fa", "two-factor", "authenticator", "security"],
-        "risk_level": "low",
-        "ground_truth_sources": ["security_policy_v4.pdf#section3"],
-    },
-    {
-        "question": "My account has been locked. How do I unlock it?",
-        "answer": "Accounts are locked after 5 failed login attempts. Wait 30 minutes for automatic unlock or contact support to unlock immediately.",
-        "keywords": ["locked", "login", "failed attempts", "unlock"],
-        "risk_level": "high",
-        "ground_truth_sources": ["security_policy_v4.pdf#section2"],
-    },
-    {
-        "question": "How do I add a new user to my account?",
-        "answer": "Go to Account Settings > Team Members > Invite User. Enter the email address and assign a role. The invite expires after 7 days.",
-        "keywords": ["add user", "invite", "team members", "role"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["admin_guide_v3.pdf#section2"],
-    },
-    {
-        "question": "Can I have multiple accounts with the same email?",
-        "answer": "Each email address can only be associated with one account. Use email aliases or separate email addresses to create additional accounts.",
-        "keywords": ["multiple accounts", "email", "alias"],
-        "risk_level": "low",
-        "ground_truth_sources": ["account_policy_v2.pdf#section1"],
-    },
-    {
-        "question": "How do I transfer account ownership?",
-        "answer": "Account ownership can be transferred by the current owner from Settings > Account > Transfer Ownership. The new owner must confirm via email.",
-        "keywords": ["transfer", "ownership", "account", "confirm"],
-        "risk_level": "critical",
-        "ground_truth_sources": ["admin_guide_v3.pdf#section5"],
-    },
-    {
-        "question": "What permissions does an Admin role have?",
-        "answer": "Admins can manage team members, billing settings, integrations, and data exports. They cannot delete the account or transfer ownership.",
-        "keywords": ["admin", "permissions", "role", "billing"],
-        "risk_level": "high",
-        "ground_truth_sources": ["admin_guide_v3.pdf#section1"],
-    },
-    {
-        "question": "How do I remove a user from my account?",
-        "answer": "Go to Account Settings > Team Members, find the user, and click Remove. Their access is revoked immediately.",
-        "keywords": ["remove user", "revoke", "access", "team members"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["admin_guide_v3.pdf#section3"],
-    },
-    {
-        "question": "I cannot log in after changing my email address.",
-        "answer": "Use your new email address to log in. If you are locked out, use the password reset flow with your new email or contact support.",
-        "keywords": ["login", "email change", "locked out"],
-        "risk_level": "high",
-        "ground_truth_sources": ["security_policy_v4.pdf#section1"],
-    },
-    {
-        "question": "How do I delete my account permanently?",
-        "answer": "Account deletion is permanent and irreversible. Go to Account Settings > Account > Delete Account. You must confirm via email. Data is purged after 30 days.",
-        "keywords": ["delete account", "permanent", "irreversible", "purge"],
-        "risk_level": "critical",
-        "ground_truth_sources": ["account_policy_v2.pdf#section5"],
-    },
+_ACCOUNT_ACCESS = [
+    {"question":"How do I reset my password?","answer":"Click Forgot Password on the login page, enter your email address, and follow the link. Links expire after 24 hours.","keywords":["password","reset","forgot","email"],"risk_level":"medium","ground_truth_sources":["security_policy_v4.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I enable two-factor authentication?","answer":"Go to Account Settings > Security > Two-Factor Authentication and follow the setup wizard. Authenticator apps and SMS are supported.","keywords":["2fa","two-factor","authenticator","security"],"risk_level":"low","ground_truth_sources":["security_policy_v4.pdf#section3"],"difficulty":"easy"},
+    {"question":"My account has been locked. How do I unlock it?","answer":"Accounts are locked after 5 failed login attempts. Wait 30 minutes for automatic unlock or contact support to unlock immediately.","keywords":["locked","login","failed attempts","unlock"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I add a new user to my account?","answer":"Go to Account Settings > Team Members > Invite User. Enter the email address and assign a role. The invite expires after 7 days.","keywords":["add user","invite","team members","role"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I have multiple accounts with the same email?","answer":"Each email address can only be associated with one account. Use email aliases or separate email addresses for additional accounts.","keywords":["multiple accounts","email","alias"],"risk_level":"low","ground_truth_sources":["account_policy_v2.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I transfer account ownership?","answer":"Account ownership can be transferred by the current owner from Settings > Account > Transfer Ownership. The new owner must confirm via email.","keywords":["transfer","ownership","account","confirm"],"risk_level":"critical","ground_truth_sources":["admin_guide_v3.pdf#section5"],"difficulty":"hard"},
+    {"question":"What permissions does an Admin role have?","answer":"Admins can manage team members, billing settings, integrations, and data exports. They cannot delete the account or transfer ownership.","keywords":["admin","permissions","role","billing"],"risk_level":"high","ground_truth_sources":["admin_guide_v3.pdf#section1"],"difficulty":"medium"},
+    {"question":"How do I remove a user from my account?","answer":"Go to Account Settings > Team Members, find the user, and click Remove. Their access is revoked immediately.","keywords":["remove user","revoke","access","team members"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section3"],"difficulty":"easy"},
+    {"question":"I cannot log in after changing my email address.","answer":"Use your new email address to log in. If locked out, use the password reset flow with your new email or contact support.","keywords":["login","email change","locked out"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section1"],"difficulty":"medium"},
+    {"question":"How do I delete my account permanently?","answer":"Account deletion is permanent and irreversible. Go to Account Settings > Account > Delete Account. Confirm via email. Data is purged after 30 days.","keywords":["delete account","permanent","irreversible","purge"],"risk_level":"critical","ground_truth_sources":["account_policy_v2.pdf#section5"],"difficulty":"hard"},
+    {"question":"What roles are available?","answer":"Available roles are: Owner, Admin, Manager, Editor, and Viewer. Each role has distinct permission sets.","keywords":["roles","owner","admin","editor","viewer"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"How long does an invitation link last?","answer":"Invitation links expire after 7 days. Resend from Account Settings > Team Members > Pending Invitations if expired.","keywords":["invitation","link","expire","7 days"],"risk_level":"low","ground_truth_sources":["admin_guide_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I restrict login to specific IP addresses?","answer":"IP allowlisting is available for enterprise plans. Configure allowed IP ranges under Account Settings > Security > IP Restrictions.","keywords":["ip allowlist","restrict","ip address","enterprise"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section4"],"difficulty":"medium"},
+    {"question":"How do I change my account email address?","answer":"Go to Account Settings > Profile > Change Email. A verification link is sent to your new email. The change takes effect after verification.","keywords":["change email","verification","profile"],"risk_level":"high","ground_truth_sources":["account_policy_v2.pdf#section2"],"difficulty":"medium"},
+    {"question":"What happens to a user's data when they are removed?","answer":"Removed users lose access immediately. Their data remains in the account. Content ownership can be reassigned by an admin.","keywords":["remove user","data","ownership","reassign"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section3"],"difficulty":"medium"},
+    {"question":"How do I set up Single Sign-On (SSO)?","answer":"SSO requires an enterprise plan. Go to Account Settings > Security > SSO and follow the SAML 2.0 configuration guide.","keywords":["sso","saml","enterprise","okta","azure"],"risk_level":"medium","ground_truth_sources":["sso_guide_v2.pdf"],"difficulty":"medium"},
+    {"question":"Can I limit what a Viewer role can see?","answer":"Viewers can see all data by default. Restrict Viewers to specific projects using custom permission sets on enterprise plans.","keywords":["viewer","restrict","permission","enterprise"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section1"],"difficulty":"medium"},
+    {"question":"How do I audit user login activity?","answer":"Login audit logs are under Account Settings > Security > Audit Log showing timestamps, IP addresses, and device information for the past 90 days.","keywords":["audit log","login","ip address","90 days"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section7"],"difficulty":"medium"},
+    {"question":"What happens if I forget my two-factor authentication code?","answer":"Use a backup recovery code saved during 2FA setup. If unavailable, contact support with identity verification to disable 2FA.","keywords":["2fa","forgot","recovery code","backup"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section3"],"difficulty":"medium"},
+    {"question":"Can I create a service account for API access?","answer":"Yes. Create service accounts under Account Settings > Developer > Service Accounts. They support API key authentication and role-based access.","keywords":["service account","api","developer","role"],"risk_level":"medium","ground_truth_sources":["api_guide_v6.pdf#section5"],"difficulty":"medium"},
+    {"question":"How do I recover a deleted user account?","answer":"Admins can restore deleted user accounts within 30 days from Account Settings > Team Members > Deleted Users.","keywords":["recover","deleted user","admin","30 days"],"risk_level":"high","ground_truth_sources":["admin_guide_v3.pdf#section3"],"difficulty":"hard"},
+    {"question":"What is the maximum number of users per account?","answer":"User limits: Starter (5 users), Professional (25 users), Enterprise (unlimited). Overages prompt an upgrade notification.","keywords":["user limit","starter","professional","enterprise"],"risk_level":"low","ground_truth_sources":["pricing_page_v5.html#limits"],"difficulty":"easy"},
+    {"question":"Can a user belong to multiple accounts?","answer":"Yes. One user email can be a member of multiple accounts. Switch between accounts from the account switcher in the top navigation.","keywords":["multiple accounts","member","switch","navigation"],"risk_level":"low","ground_truth_sources":["account_policy_v2.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I enforce password complexity rules?","answer":"Configure password policies under Account Settings > Security > Password Policy. Set minimum length, complexity, and rotation requirements.","keywords":["password policy","complexity","rotation","security"],"risk_level":"medium","ground_truth_sources":["security_policy_v4.pdf#section1"],"difficulty":"medium"},
+    {"question":"How do I set a session timeout?","answer":"Configure session timeout under Account Settings > Security > Session Management. Options range from 15 minutes to 30 days of inactivity.","keywords":["session timeout","inactivity","security"],"risk_level":"medium","ground_truth_sources":["security_policy_v4.pdf#section2"],"difficulty":"easy"},
+    {"question":"What is the difference between Owner and Admin roles?","answer":"The Owner role can transfer ownership, delete the account, and manage billing. Admins cannot perform these irreversible actions.","keywords":["owner","admin","role difference","billing"],"risk_level":"high","ground_truth_sources":["admin_guide_v3.pdf#section1"],"difficulty":"medium"},
+    {"question":"Can I prevent users from changing their own profile?","answer":"Profile editing restrictions can be enabled by Admins under Account Settings > Permissions > User Self-Edit.","keywords":["profile","restrict","self-edit","admin"],"risk_level":"low","ground_truth_sources":["admin_guide_v3.pdf#section4"],"difficulty":"medium"},
+    {"question":"How do I view all active sessions for my account?","answer":"Go to Account Settings > Security > Active Sessions to view all logged-in sessions. You can remotely terminate any session.","keywords":["active sessions","remote terminate","security"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section2"],"difficulty":"easy"},
+    {"question":"What happens when an account owner is deactivated?","answer":"Ownership must be transferred before an Owner is deactivated. Contact support with legal authorization for an emergency transfer if the Owner is unavailable.","keywords":["owner deactivated","transfer","emergency","legal"],"risk_level":"critical","ground_truth_sources":["admin_guide_v3.pdf#section5"],"difficulty":"hard"},
+    {"question":"Can I bulk import users via CSV?","answer":"Bulk user import via CSV is supported for Professional and Enterprise plans from Account Settings > Team Members > Import Users.","keywords":["bulk import","csv","users","professional"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I enable login notifications?","answer":"Enable login notifications under Account Settings > Security > Notifications to receive an email for each new device login.","keywords":["login notifications","new device","email","security"],"risk_level":"low","ground_truth_sources":["security_policy_v4.pdf#section8"],"difficulty":"easy"},
+    {"question":"What authentication methods are supported?","answer":"Supported: email/password, Google OAuth, Microsoft OAuth, SAML 2.0 SSO, and API key. SMS 2FA and TOTP apps are supported for MFA.","keywords":["authentication","oauth","saml","totp","api key"],"risk_level":"medium","ground_truth_sources":["security_policy_v4.pdf#section3"],"difficulty":"medium"},
+    {"question":"How do I enable SCIM provisioning?","answer":"SCIM provisioning is available for enterprise plans. Go to Account Settings > Security > SCIM Provisioning and generate a SCIM token.","keywords":["scim","provisioning","enterprise","okta"],"risk_level":"medium","ground_truth_sources":["sso_guide_v2.pdf#section3"],"difficulty":"hard"},
+    {"question":"Can I set different permissions per project?","answer":"Project-level permissions are available on Professional and Enterprise plans. Assign different roles per project under Project Settings > Members.","keywords":["project permissions","role","professional","enterprise"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section7"],"difficulty":"medium"},
+    {"question":"How do I revoke an API key?","answer":"Go to Account Settings > Developer > API Keys, find the key, and click Revoke. The key is invalidated immediately.","keywords":["api key","revoke","developer","invalidate"],"risk_level":"high","ground_truth_sources":["api_guide_v6.pdf#section2"],"difficulty":"easy"},
+    {"question":"What is a guest user and what can they access?","answer":"Guest users are external collaborators with limited access. They can view and comment on shared items only, not billing or settings.","keywords":["guest user","external","limited access","billing"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I export a list of all users?","answer":"Export the user list from Account Settings > Team Members > Export Users including name, email, role, and last login date.","keywords":["export users","list","email","role"],"risk_level":"low","ground_truth_sources":["admin_guide_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I prevent users from signing up with personal email domains?","answer":"Configure domain restriction under Account Settings > Security > Domain Allowlist. Only approved domain emails can join.","keywords":["domain restriction","allowlist","personal email","security"],"risk_level":"medium","ground_truth_sources":["security_policy_v4.pdf#section9"],"difficulty":"medium"},
+    {"question":"How do I change a user's role?","answer":"Go to Account Settings > Team Members, click the user's name, and select a new role from the Role dropdown. Changes take effect immediately.","keywords":["change role","team members","dropdown"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section3"],"difficulty":"easy"},
+    {"question":"Can I set an expiry date for a user's access?","answer":"Access expiry dates can be set for individual users on Enterprise plans. Go to Team Members, click the user, and set an access expiry date.","keywords":["access expiry","enterprise","user","date"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section2"],"difficulty":"medium"},
+    {"question":"What is the lockout policy for failed login attempts?","answer":"Accounts are locked after 5 consecutive failed login attempts within 10 minutes. Lockout lasts 30 minutes or until manually unlocked by an admin.","keywords":["lockout","failed login","5 attempts","30 minutes"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I view pending invitations?","answer":"View pending invitations under Account Settings > Team Members > Pending Invitations. Resend or revoke invitations from this view.","keywords":["pending invitations","resend","revoke","team members"],"risk_level":"low","ground_truth_sources":["admin_guide_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I create custom roles?","answer":"Custom roles with specific permission combinations are available on Enterprise plans from Account Settings > Roles > Create Custom Role.","keywords":["custom roles","permissions","enterprise"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section1"],"difficulty":"medium"},
+    {"question":"How do I prevent account sharing?","answer":"Account sharing detection flags accounts with concurrent logins from different locations. Enable under Account Settings > Security > Concurrent Session Policy.","keywords":["account sharing","concurrent sessions","security"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section10"],"difficulty":"medium"},
+    {"question":"What happens to shared content when a user is removed?","answer":"Shared content from a removed user remains in the account. An Admin can reassign ownership to another active user.","keywords":["shared content","removed user","ownership","reassign"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section3"],"difficulty":"medium"},
+    {"question":"Is biometric login supported?","answer":"Biometric login (Face ID, Touch ID) is supported on mobile apps. Desktop login uses email/password, OAuth, or SSO.","keywords":["biometric","face id","touch id","mobile"],"risk_level":"low","ground_truth_sources":["security_policy_v4.pdf#section3"],"difficulty":"easy"},
+    {"question":"Can I merge two user accounts?","answer":"User account merges are not supported through self-service. Contact support with both account IDs and proof of ownership.","keywords":["merge accounts","user","support","proof of ownership"],"risk_level":"high","ground_truth_sources":["account_policy_v2.pdf#section4"],"difficulty":"hard"},
+    {"question":"How do I suspend a user without deleting them?","answer":"Suspend a user from Account Settings > Team Members > user > Suspend. Suspended users cannot log in but data remains.","keywords":["suspend user","deactivate","reactivate","access"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section3"],"difficulty":"easy"},
+    {"question":"What is the maximum number of API keys per account?","answer":"Each account can have up to 10 active API keys. Enterprise accounts can request an increase from support.","keywords":["api keys","maximum","10","enterprise"],"risk_level":"low","ground_truth_sources":["api_guide_v6.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I audit changes made by admin users?","answer":"Admin activity logs are under Account Settings > Security > Admin Audit Log. All admin actions including role changes, user additions, and settings modifications are logged for the past 90 days.","keywords":["admin audit","changes","log","90 days"],"risk_level":"high","ground_truth_sources":["security_policy_v4.pdf#section7"],"difficulty":"medium"},
 ]
 
-_PRODUCT_SUPPORT: List[dict] = [
-    {
-        "question": "How do I connect my CRM to a third-party email provider?",
-        "answer": "Go to Integrations > Email Providers and select your provider. Enter your API credentials and click Test Connection before saving.",
-        "keywords": ["crm", "email", "integration", "api credentials"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["integration_guide_v5.pdf#section3"],
-    },
-    {
-        "question": "Why are my automation rules not triggering?",
-        "answer": "Check that the rule is active, the trigger conditions match your data, and the rule has not exceeded its daily execution limit.",
-        "keywords": ["automation", "rules", "trigger", "execution limit"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["automation_guide_v4.pdf#section2"],
-    },
-    {
-        "question": "How do I export my contact data?",
-        "answer": "Go to Contacts > Export, select the fields and date range, and click Export CSV. Exports are emailed to your account email within 10 minutes.",
-        "keywords": ["export", "contacts", "csv", "data"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["data_guide_v3.pdf#section1"],
-    },
-    {
-        "question": "What is the maximum file size for document uploads?",
-        "answer": "Individual file uploads are limited to 50MB. Bulk imports via the API support files up to 500MB.",
-        "keywords": ["file size", "upload", "limit", "bulk import"],
-        "risk_level": "low",
-        "ground_truth_sources": ["limits_guide_v2.pdf#section1"],
-    },
-    {
-        "question": "How do I set up a webhook?",
-        "answer": "Go to Settings > Developer > Webhooks, click Add Webhook, enter your endpoint URL, select events to subscribe to, and save.",
-        "keywords": ["webhook", "endpoint", "events", "developer"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["api_guide_v6.pdf#section4"],
-    },
-    {
-        "question": "What are the API rate limits?",
-        "answer": "The standard API rate limit is 1,000 requests per hour per API key. Enterprise plans have a limit of 10,000 requests per hour.",
-        "keywords": ["api", "rate limit", "requests", "enterprise"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["api_guide_v6.pdf#section1"],
-    },
-    {
-        "question": "How do I create a custom field?",
-        "answer": "Go to Settings > Fields > Custom Fields > Add Field. Choose the field type, set visibility and required status, then save.",
-        "keywords": ["custom field", "settings", "field type"],
-        "risk_level": "low",
-        "ground_truth_sources": ["admin_guide_v3.pdf#section6"],
-    },
-    {
-        "question": "Why is my dashboard loading slowly?",
-        "answer": "Dashboard slowness is usually caused by large date ranges or complex filter combinations. Try narrowing the date range or simplifying your filters.",
-        "keywords": ["dashboard", "slow", "performance", "filter"],
-        "risk_level": "low",
-        "ground_truth_sources": ["performance_guide_v1.pdf#section2"],
-    },
-    {
-        "question": "How do I import contacts from a CSV file?",
-        "answer": "Go to Contacts > Import > Upload CSV. Map your CSV columns to contact fields, review the preview, and click Import. Duplicates are detected automatically.",
-        "keywords": ["import", "contacts", "csv", "duplicates"],
-        "risk_level": "medium",
-        "ground_truth_sources": ["data_guide_v3.pdf#section2"],
-    },
-    {
-        "question": "How do I enable GDPR data deletion for a contact?",
-        "answer": "Go to the contact record, click the Privacy menu, and select Request Data Deletion. The deletion is processed within 30 days per GDPR requirements.",
-        "keywords": ["gdpr", "data deletion", "privacy", "contact"],
-        "risk_level": "critical",
-        "ground_truth_sources": ["gdpr_guide_v3.pdf#section1"],
-    },
+_PRODUCT_SUPPORT = [
+    {"question":"How do I connect my CRM to a third-party email provider?","answer":"Go to Integrations > Email Providers, select your provider, enter API credentials, and click Test Connection before saving.","keywords":["crm","email","integration","api credentials"],"risk_level":"medium","ground_truth_sources":["integration_guide_v5.pdf#section3"],"difficulty":"medium"},
+    {"question":"Why are my automation rules not triggering?","answer":"Check that the rule is active, trigger conditions match your data, and the rule has not exceeded its daily execution limit.","keywords":["automation","rules","trigger","execution limit"],"risk_level":"medium","ground_truth_sources":["automation_guide_v4.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I export my contact data?","answer":"Go to Contacts > Export, select fields and date range, and click Export CSV. Exports are emailed within 10 minutes.","keywords":["export","contacts","csv","data"],"risk_level":"medium","ground_truth_sources":["data_guide_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"What is the maximum file size for document uploads?","answer":"Individual file uploads are limited to 50MB. Bulk imports via API support files up to 500MB.","keywords":["file size","upload","limit","bulk import"],"risk_level":"low","ground_truth_sources":["limits_guide_v2.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I set up a webhook?","answer":"Go to Settings > Developer > Webhooks, click Add Webhook, enter your endpoint URL, select events, and save.","keywords":["webhook","endpoint","events","developer"],"risk_level":"medium","ground_truth_sources":["api_guide_v6.pdf#section4"],"difficulty":"medium"},
+    {"question":"What are the API rate limits?","answer":"The standard API rate limit is 1,000 requests per hour per API key. Enterprise plans have a limit of 10,000 requests per hour.","keywords":["api","rate limit","requests","enterprise"],"risk_level":"medium","ground_truth_sources":["api_guide_v6.pdf#section1"],"difficulty":"medium"},
+    {"question":"How do I create a custom field?","answer":"Go to Settings > Fields > Custom Fields > Add Field. Choose the field type, set visibility and required status, then save.","keywords":["custom field","settings","field type"],"risk_level":"low","ground_truth_sources":["admin_guide_v3.pdf#section6"],"difficulty":"easy"},
+    {"question":"Why is my dashboard loading slowly?","answer":"Dashboard slowness is caused by large date ranges or complex filter combinations. Narrow the date range or simplify filters.","keywords":["dashboard","slow","performance","filter"],"risk_level":"low","ground_truth_sources":["performance_guide_v1.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I import contacts from a CSV file?","answer":"Go to Contacts > Import > Upload CSV. Map columns to contact fields, review the preview, and click Import.","keywords":["import","contacts","csv","duplicates"],"risk_level":"medium","ground_truth_sources":["data_guide_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I enable GDPR data deletion for a contact?","answer":"Go to the contact record, click the Privacy menu, and select Request Data Deletion. Processed within 30 days per GDPR.","keywords":["gdpr","data deletion","privacy","contact"],"risk_level":"critical","ground_truth_sources":["gdpr_guide_v3.pdf#section1"],"difficulty":"hard"},
+    {"question":"How do I create a workflow automation?","answer":"Go to Automation > Create Workflow. Choose a trigger, add conditions and actions, and activate. Test in sandbox mode first.","keywords":["workflow","automation","trigger","sandbox"],"risk_level":"medium","ground_truth_sources":["automation_guide_v4.pdf#section1"],"difficulty":"medium"},
+    {"question":"What file formats are supported for import?","answer":"Supported import formats: CSV, XLS, XLSX, JSON, and VCF (contacts). API imports support JSON and XML.","keywords":["file format","import","csv","xlsx","json"],"risk_level":"low","ground_truth_sources":["data_guide_v3.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I set up email sequences?","answer":"Go to Email > Sequences > New Sequence. Define the schedule, add email steps, set delay intervals, and enroll contacts or segments.","keywords":["email sequences","schedule","steps","segments"],"risk_level":"medium","ground_truth_sources":["email_guide_v3.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I track email open rates?","answer":"Email open rates are visible in Email > Analytics. Open tracking is enabled by default. Disable in Email > Settings > Tracking if needed.","keywords":["email","open rate","analytics","tracking"],"risk_level":"low","ground_truth_sources":["email_guide_v3.pdf#section3"],"difficulty":"easy"},
+    {"question":"How do I integrate with Slack?","answer":"Go to Integrations > Slack and click Connect. Authorize the Slack app and configure notification rules.","keywords":["slack","integration","notifications","connect"],"risk_level":"low","ground_truth_sources":["integration_guide_v5.pdf#section7"],"difficulty":"easy"},
+    {"question":"Can I connect multiple email inboxes?","answer":"Up to 5 email inboxes can be connected per account on Professional plans. Enterprise plans support unlimited inboxes.","keywords":["email inboxes","multiple","professional","enterprise"],"risk_level":"low","ground_truth_sources":["email_guide_v3.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I set up lead scoring?","answer":"Go to Settings > Lead Scoring > Configure. Add scoring rules based on contact properties, activity, and engagement. Scores update in real time.","keywords":["lead scoring","rules","engagement","real time"],"risk_level":"medium","ground_truth_sources":["crm_guide_v4.pdf#section5"],"difficulty":"medium"},
+    {"question":"How do I merge duplicate contacts?","answer":"Go to Contacts, select both contacts, and click Merge. Resolve field conflicts. The primary contact retains the merged data.","keywords":["merge","duplicate","contacts","primary"],"risk_level":"medium","ground_truth_sources":["data_guide_v3.pdf#section3"],"difficulty":"medium"},
+    {"question":"How do I segment my contact list?","answer":"Go to Contacts > Segments > Create Segment. Define filter conditions based on properties, activities, or tags. Segments update dynamically.","keywords":["segment","contacts","filter","dynamic"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section3"],"difficulty":"easy"},
+    {"question":"How do I use the API to create a contact?","answer":"Send a POST request to /api/v2/contacts with a JSON body containing contact fields. Include your API key in the Authorization header.","keywords":["api","create contact","post","json"],"risk_level":"medium","ground_truth_sources":["api_guide_v6.pdf#section3"],"difficulty":"medium"},
+    {"question":"What is the difference between a contact and a lead?","answer":"A lead is an unqualified prospect. A contact is a qualified individual or company. Leads can be converted to contacts through the qualification workflow.","keywords":["contact","lead","difference","qualified"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I add tags to contacts?","answer":"Go to the contact record and click Add Tag. Create new tags or select existing ones. Tags can be bulk-applied from the contact list view.","keywords":["tags","contacts","bulk","add"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I schedule a task or follow-up?","answer":"Go to the contact or deal record and click Add Task. Set the due date, assign to a team member, and add notes.","keywords":["task","follow-up","due date","calendar"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section6"],"difficulty":"easy"},
+    {"question":"How do I configure pipeline stages?","answer":"Go to Settings > Pipelines > Edit Pipeline. Add, rename, or reorder stages. Set probability percentages and required fields per stage.","keywords":["pipeline","stages","probability","configure"],"risk_level":"medium","ground_truth_sources":["crm_guide_v4.pdf#section4"],"difficulty":"medium"},
+    {"question":"How do I log a call in the CRM?","answer":"Go to the contact or deal record and click Log Activity > Call. Enter duration, outcome, and notes. Calls can also be logged via telephony integration.","keywords":["log call","activity","telephony","outcome"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section7"],"difficulty":"easy"},
+    {"question":"How do I generate a sales forecast report?","answer":"Go to Reports > Sales Forecast. Select the pipeline, date range, and team. The report shows weighted and unweighted revenue forecasts by stage.","keywords":["sales forecast","report","pipeline","revenue"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section8"],"difficulty":"medium"},
+    {"question":"Can I import deals from a CSV?","answer":"Yes. Go to Deals > Import > Upload CSV. Map columns to deal fields. Contacts referenced in the CSV are matched by email or created if not found.","keywords":["import deals","csv","contacts","match"],"risk_level":"medium","ground_truth_sources":["data_guide_v3.pdf#section4"],"difficulty":"medium"},
+    {"question":"How do I configure email deliverability settings?","answer":"Go to Email > Settings > Deliverability. Configure DKIM, SPF, and DMARC for your sending domain. Verify your domain before sending campaigns.","keywords":["deliverability","dkim","spf","dmarc","domain"],"risk_level":"medium","ground_truth_sources":["email_guide_v3.pdf#section4"],"difficulty":"hard"},
+    {"question":"How do I use the mobile app offline?","answer":"The mobile app caches contact data for offline access. Changes sync automatically when connectivity is restored.","keywords":["mobile app","offline","sync","cache"],"risk_level":"low","ground_truth_sources":["mobile_guide_v2.pdf#section1"],"difficulty":"medium"},
+    {"question":"How do I set up deal rotation for my team?","answer":"Go to Settings > Assignments > Deal Rotation. Configure round-robin rules by team or territory. Deals are assigned automatically.","keywords":["deal rotation","round-robin","territory","assignment"],"risk_level":"medium","ground_truth_sources":["crm_guide_v4.pdf#section9"],"difficulty":"medium"},
+    {"question":"What is the document storage limit?","answer":"Storage limits: Starter (5GB), Professional (50GB), Enterprise (500GB or custom). View usage under Account Settings > Storage.","keywords":["storage limit","starter","professional","enterprise"],"risk_level":"low","ground_truth_sources":["limits_guide_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I use conditional logic in forms?","answer":"In the form builder, select a field and click Add Logic. Define conditions to show or hide other fields. Preview before publishing.","keywords":["form","conditional logic","field","builder"],"risk_level":"low","ground_truth_sources":["forms_guide_v2.pdf#section3"],"difficulty":"medium"},
+    {"question":"How do I set up automatic deal stage progression?","answer":"Go to Settings > Pipelines > Automation. Add rules like 'If email opened, move deal to Contacted stage'.","keywords":["deal stage","automation","rules","pipeline"],"risk_level":"medium","ground_truth_sources":["automation_guide_v4.pdf#section3"],"difficulty":"medium"},
+    {"question":"How do I integrate with Google Calendar?","answer":"Go to Integrations > Google Calendar and click Connect. Authorize access and select which calendars to sync.","keywords":["google calendar","integration","sync","meetings"],"risk_level":"low","ground_truth_sources":["integration_guide_v5.pdf#section4"],"difficulty":"easy"},
+    {"question":"How do I archive a contact?","answer":"Go to the contact record and click Actions > Archive. Archived contacts are hidden from the main list but findable with the Archived filter.","keywords":["archive","contact","hidden","filter"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section2"],"difficulty":"easy"},
+    {"question":"Can I customize the CRM dashboard?","answer":"Click Customize on the dashboard to add, remove, or rearrange widgets including pipeline charts, activity feeds, and custom reports.","keywords":["dashboard","customize","widgets","pipeline"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section10"],"difficulty":"easy"},
+    {"question":"How do I set field-level permissions?","answer":"Field-level permissions are configurable on Enterprise plans under Settings > Fields > select a field > Permissions. Restrict read or write access by role.","keywords":["field permissions","enterprise","read","write"],"risk_level":"high","ground_truth_sources":["admin_guide_v3.pdf#section6"],"difficulty":"hard"},
+    {"question":"How do I use the Zapier integration?","answer":"Search for the CRM app in Zapier and connect using your API key. Build Zaps to automate tasks like adding contacts from form submissions.","keywords":["zapier","integration","api key","automation"],"risk_level":"medium","ground_truth_sources":["integration_guide_v5.pdf#section8"],"difficulty":"medium"},
+    {"question":"How do I enable dark mode?","answer":"Go to Account Settings > Appearance > Theme and select Dark Mode. The preference is saved per user and synced across devices.","keywords":["dark mode","appearance","theme","preference"],"risk_level":"low","ground_truth_sources":["user_guide_v2.pdf#section1"],"difficulty":"easy"},
+    {"question":"How do I configure notification preferences?","answer":"Go to Account Settings > Notifications. Choose which events trigger email, push, or in-app notifications. Preferences are per-user.","keywords":["notifications","email","push","preferences"],"risk_level":"low","ground_truth_sources":["user_guide_v2.pdf#section2"],"difficulty":"easy"},
+    {"question":"How do I restore a deleted contact?","answer":"Deleted contacts go to Trash. Go to Contacts > Trash, find the contact, and click Restore. Permanently deleted after 30 days.","keywords":["restore","deleted contact","trash","30 days"],"risk_level":"medium","ground_truth_sources":["data_guide_v3.pdf#section5"],"difficulty":"easy"},
+    {"question":"What is the contact limit per account?","answer":"Contact limits: Starter (2,500), Professional (50,000), Enterprise (unlimited). Exceeding the limit triggers an upgrade prompt.","keywords":["contact limit","starter","professional","enterprise"],"risk_level":"medium","ground_truth_sources":["limits_guide_v2.pdf#section3"],"difficulty":"easy"},
+    {"question":"How do I build a custom report?","answer":"Go to Reports > Custom Reports > New Report. Select a data source, add dimensions and metrics, apply filters, and save.","keywords":["custom report","dimensions","metrics","filters"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section8"],"difficulty":"medium"},
+    {"question":"How do I connect a telephony provider?","answer":"Go to Integrations > Telephony and select your provider. Supported: Twilio, RingCentral, Vonage. Follow the provider-specific setup guide.","keywords":["telephony","twilio","ringcentral","integration"],"risk_level":"medium","ground_truth_sources":["integration_guide_v5.pdf#section5"],"difficulty":"medium"},
+    {"question":"How do I send a bulk email campaign?","answer":"Go to Email > Campaigns > New Campaign. Select a segment, choose a template, and schedule or send immediately. Unsubscribes are handled automatically.","keywords":["bulk email","campaign","segment","template"],"risk_level":"medium","ground_truth_sources":["email_guide_v3.pdf#section5"],"difficulty":"medium"},
+    {"question":"How do I view a contact's activity timeline?","answer":"Open the contact record and click the Activity tab. The timeline shows all interactions: emails, calls, meetings, notes, and deal updates.","keywords":["activity timeline","contact","emails","calls"],"risk_level":"low","ground_truth_sources":["crm_guide_v4.pdf#section7"],"difficulty":"easy"},
+    {"question":"How do I configure business hours?","answer":"Go to Settings > General > Business Hours. Set your team's working hours and time zone. Used for SLA calculations and automation scheduling.","keywords":["business hours","time zone","sla","automation"],"risk_level":"medium","ground_truth_sources":["admin_guide_v3.pdf#section8"],"difficulty":"easy"},
+    {"question":"How do I handle unsubscribe requests?","answer":"Unsubscribes from email campaigns are handled automatically. The contact's subscription status is updated immediately.","keywords":["unsubscribe","email","subscription","gdpr"],"risk_level":"critical","ground_truth_sources":["gdpr_guide_v3.pdf#section2"],"difficulty":"medium"},
+    {"question":"How do I use the document signing feature?","answer":"Go to Documents > New Document, upload your PDF, add signature fields, and send to signers. Signed documents are stored in the contact or deal record.","keywords":["document signing","pdf","signature","fields"],"risk_level":"medium","ground_truth_sources":["crm_guide_v4.pdf#section11"],"difficulty":"medium"},
+    {"question":"How do I track website visitors in the CRM?","answer":"Install the tracking script from Settings > Tracking > Web Tracking on your website. Identified visitors are automatically linked to CRM contacts.","keywords":["website tracking","script","visitors","contacts"],"risk_level":"medium","ground_truth_sources":["crm_guide_v4.pdf#section12"],"difficulty":"medium"},
 ]
 
 _DOMAIN_MAP = {
@@ -402,27 +291,25 @@ _DOMAIN_MAP = {
     "product_support": _PRODUCT_SUPPORT,
 }
 
-
-def load_faq_dataset(domains: Optional[List[str]] = None) -> List[FAQItem]:
+def load_faq_dataset(
+    domains: Optional[List[str]] = None,
+    risk_levels: Optional[List[str]] = None,
+    difficulty: Optional[str] = None,
+) -> List[FAQItem]:
     """
-    Load the synthetic CRM FAQ dataset.
+    Load the synthetic CRM FAQ dataset (250 items, 50 per domain).
 
     Parameters
     ----------
-    domains : list of str, optional
-        Filter to specific domains. Options: billing, returns, sla,
-        account_access, product_support. Default: all domains.
-
-    Returns
-    -------
-    list of FAQItem
+    domains     : filter by domain (billing, returns, sla, account_access, product_support)
+    risk_levels : filter by risk level (low, medium, high, critical)
+    difficulty  : filter by difficulty (easy, medium, hard)
     """
     selected = domains or list(_DOMAIN_MAP.keys())
     items: List[FAQItem] = []
-    counter = 1
     for domain in selected:
         for i, raw in enumerate(_DOMAIN_MAP[domain]):
-            items.append(FAQItem(
+            item = FAQItem(
                 id=f"faq-{domain[:3].upper()}-{i+1:03d}",
                 domain=domain,
                 question=raw["question"],
@@ -430,22 +317,25 @@ def load_faq_dataset(domains: Optional[List[str]] = None) -> List[FAQItem]:
                 keywords=raw["keywords"],
                 risk_level=raw["risk_level"],
                 ground_truth_sources=raw["ground_truth_sources"],
-            ))
-            counter += 1
+                difficulty=raw.get("difficulty","medium"),
+            )
+            if risk_levels and item.risk_level not in risk_levels:
+                continue
+            if difficulty and item.difficulty != difficulty:
+                continue
+            items.append(item)
     return items
 
-
-def load_faq_as_dicts(domains: Optional[List[str]] = None) -> List[dict]:
-    """Return FAQ items as plain dicts for easy serialisation."""
+def load_faq_as_dicts(
+    domains: Optional[List[str]] = None,
+    risk_levels: Optional[List[str]] = None,
+    difficulty: Optional[str] = None,
+) -> List[dict]:
+    """Return FAQ items as plain dicts."""
     return [
-        {
-            "id": item.id,
-            "domain": item.domain,
-            "question": item.question,
-            "answer": item.answer,
-            "keywords": item.keywords,
-            "risk_level": item.risk_level,
-            "ground_truth_sources": item.ground_truth_sources,
-        }
-        for item in load_faq_dataset(domains)
+        {"id": item.id, "domain": item.domain, "question": item.question,
+         "answer": item.answer, "keywords": item.keywords,
+         "risk_level": item.risk_level, "ground_truth_sources": item.ground_truth_sources,
+         "difficulty": item.difficulty}
+        for item in load_faq_dataset(domains, risk_levels, difficulty)
     ]

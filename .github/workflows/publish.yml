@@ -5,12 +5,8 @@ on:
     tags: [ 'v*.*.*' ]
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,4 +14,29 @@ jobs:
           python-version: '3.11'
       - run: pip install build
       - run: python -m build
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # Required for OIDC trusted publishing (no token needed)
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish to PyPI (OIDC trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No password or token needed — uses GitHub OIDC
+        # Prerequisites: add this repo as a Pending Publisher on pypi.org first
+        # See: https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+        #   Publisher: GitHub
+        #   Owner:     chitralabs
+        #   Repo:      crm-rag-eval
+        #   Workflow:  publish.yml
+        #   Env:       pypi
